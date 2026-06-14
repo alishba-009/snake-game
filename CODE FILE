@@ -1,0 +1,95 @@
+import java.util.*;
+
+public class SimpleSnakeGame {
+    static final int SIZE = 15;
+    static Deque<Integer> snake = new ArrayDeque<>();
+    static Set<Integer> occupied = new HashSet<>();
+    static int food;
+    static char dir = 'R';
+    static int score = 0;
+    static boolean running = true;
+    static Random rand = new Random();
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int start = (SIZE / 2) + (SIZE / 2) * SIZE;
+        snake.add(start);
+        occupied.add(start);
+        spawnFood();
+
+        while (running) {
+            display();
+            System.out.print("\n\033[0mMove (U▲ / D▼ / L◀ / R▶ / Q🛑): ");
+            String input = sc.next().toUpperCase();
+            if (input.equals("Q")) break;
+
+            if (input.length() > 0) {
+                char newDir = input.charAt(0);
+                // Correct direction logic
+                if (newDir == 'U' && dir != 'D') dir = 'U';
+                else if (newDir == 'D' && dir != 'U') dir = 'D';
+                else if (newDir == 'L' && dir != 'R') dir = 'L';
+                else if (newDir == 'R' && dir != 'L') dir = 'R';
+            }
+            move();
+        }
+        System.out.println("\n\033[0mGame Over! Final Score: " + score);
+        sc.close();
+    }
+
+    static void display() {
+        // Clear screen and reset cursor to top left
+        System.out.print("\033[H\033[2J");
+        // Set charcoal background
+        System.out.print("\033[48;2;30;30;30m");
+        System.out.flush();
+
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                int pos = x + y * SIZE;
+
+                if (snake.peekFirst() == pos) {
+                    System.out.print("\033[32m██ \033[0m"); // Head (Green)
+                } else if (snake.contains(pos)) {
+                    System.out.print("\033[32m▓▓ \033[0m"); // Body (Green)
+                } else if (food == pos) {
+                    System.out.print("🍎 ");
+                } else {
+                    System.out.print("\033[37m·  \033[0m"); // Dots
+                }
+            }
+            System.out.println();
+        }
+        System.out.println("\033[0mScore: " + score);
+    }
+
+    static void move() {
+        int head = snake.peekFirst();
+        int x = head % SIZE;
+        int y = head / SIZE;
+
+        if (dir == 'U') y--;
+        else if (dir == 'D') y++;
+        else if (dir == 'L') x--;
+        else if (dir == 'R') x++;
+
+        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || occupied.contains(x + y * SIZE)) {
+            running = false; return;
+        }
+
+        int newHead = x + y * SIZE;
+        snake.addFirst(newHead);
+        occupied.add(newHead);
+
+        if (newHead == food) {
+            score += 10;
+            spawnFood();
+        } else {
+            occupied.remove(snake.removeLast());
+        }
+    }
+
+    static void spawnFood() {
+        do { food = rand.nextInt(SIZE * SIZE); } while (occupied.contains(food));
+    }
+}
